@@ -1,14 +1,14 @@
 import pandas as pd
 import numpy as np
-from pybaseball import statcast
+import pybaseball as pyball
 
 
-def correct_call(df: pd.DataFrame) -> int:
-    call_type: str = df['type']
-    plate_x: float = df['plate_x']
-    plate_z: float = df['plate_z']
-    sz_top: float = df['sz_top']
-    sz_bot: float = df['sz_bot']
+def correct_call(df_sc: pd.DataFrame) -> int:
+    call_type: str = df_sc['type']
+    plate_x: float = df_sc['plate_x']
+    plate_z: float = df_sc['plate_z']
+    sz_top: float = df_sc['sz_top']
+    sz_bot: float = df_sc['sz_bot']
     sz_hor: float = 0.83
     baseball_rad: float = 0.120833
     correct_call: int = 1
@@ -26,11 +26,16 @@ def correct_call(df: pd.DataFrame) -> int:
     return correct_call
 
 
+def import_umpires():
+    df_rs = pd.DataFrame(data=pyball.retrosheet.season_game_logs('2023'))
+    print(df_rs)
+    return
+
+
 def remove_empty():
-    df.dropna(how = 'all', axis = 1, inplace = True)
+    df_sc.dropna(how = 'all', axis = 1, inplace = True)
 
 
-data = statcast(start_dt = "2023-04-01", end_dt = "2023-10-01")
 headers: list = ['pitch_type', 'game_date', 'release_speed', 'release_pos_x',
        'release_pos_z', 'player_name', 'batter', 'pitcher', 'events',
        'description', 'spin_dir', 'spin_rate_deprecated',
@@ -52,16 +57,19 @@ headers: list = ['pitch_type', 'game_date', 'release_speed', 'release_pos_x',
        'post_home_score', 'post_bat_score', 'post_fld_score',
        'if_fielding_alignment', 'of_fielding_alignment', 'spin_axis',
        'delta_home_win_exp', 'delta_run_exp']
-df = pd.DataFrame(data=data, columns=headers)
-del data
+df_sc = pd.DataFrame(data=pyball.statcast(start_dt = "2023-03-30", end_dt = "2023-04-01"), columns=headers)
 
-df = df[df['description'].isin(['ball','called_strike'])]
-df = df[df[['plate_x','plate_z','sz_top','sz_bot']].notnull()]
-df = df[df['plate_z'].notnull()]
-df = df[df['sz_top'].notnull()]
-df = df[df['sz_bot'].notnull()]
-df['correct_call'] = df.apply(correct_call, axis = 1)
+df_sc = df_sc[df_sc['description'].isin(['ball','called_strike'])]
+df_sc = df_sc[df_sc['plate_x'].notnull()]
+df_sc = df_sc[df_sc['plate_z'].notnull()]
+df_sc = df_sc[df_sc['sz_top'].notnull()]
+df_sc = df_sc[df_sc['sz_bot'].notnull()]
+df_sc['correct_call'] = df_sc.apply(correct_call, axis = 1)
 
 #remove_empty()
 
-df.to_csv("statcast_data_calls_all.csv", index=False, encoding='utf8')
+#df_rs = pd.DataFrame(data=pyball.retrosheet.season_game_logs('2023'))
+
+#import_umpires()
+
+df_sc.to_csv("statcast_data_calls_all.csv", index=False, encoding='utf8')
