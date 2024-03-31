@@ -56,7 +56,7 @@ def df_headers(source: str) -> list:
         'fielder_with_third_putout', 'fielder_with_first_assist',
         'fielder_with_second_assist', 'fielder_with_third_assist',
         'fielder_with_fourth_assist', 'fielder_with_fifth_assist','event_num']
-    elif source == 'retrosheet-game':
+    elif source == 'retrosheet-games':
         headers = ['game_id', 'date', 'game_number', 'day_of_week', 'start_time',
         'dh_used_flag', 'day_night_flag', 'visiting_team', 'home_team','game_site',
         'visiting_starting_pitcher', 'home_starting_pitcher', 'home_plate_umpire',
