@@ -1,9 +1,14 @@
+import pybaseball as pyball
 import pandas as pd
 import numpy as np
-import pybaseball as pyball
+from datetime import datetime
 
 
 def correct_call(df_sc: pd.DataFrame) -> int:
+    """
+    Compares each relative strike zone to pitch location. If the umpire's call
+    is at odds with this comparison, correct_call returns 0.
+    """
     call_type: str = df_sc['type']
     plate_x: float = df_sc['plate_x']
     plate_z: float = df_sc['plate_z']
@@ -27,8 +32,9 @@ def correct_call(df_sc: pd.DataFrame) -> int:
 
 
 def import_umpires():
-    df_rs = pd.DataFrame(data=pyball.retrosheet.season_game_logs('2023'))
-    print(df_rs)
+    from retrosheet import season_game_logs as game_logs
+    df_rs = pd.DataFrame(data=game_logs('2023'))
+    df_rs = df_rs[['date','ump_home_id','ump_home_name']]
     return
 
 
@@ -57,6 +63,7 @@ headers: list = ['pitch_type', 'game_date', 'release_speed', 'release_pos_x',
        'post_home_score', 'post_bat_score', 'post_fld_score',
        'if_fielding_alignment', 'of_fielding_alignment', 'spin_axis',
        'delta_home_win_exp', 'delta_run_exp']
+df_sc = pd.DataFrame
 df_sc = pd.DataFrame(data=pyball.statcast(start_dt = "2023-03-30", end_dt = "2023-04-01"), columns=headers)
 
 df_sc = df_sc[df_sc['description'].isin(['ball','called_strike'])]
@@ -68,8 +75,8 @@ df_sc['correct_call'] = df_sc.apply(correct_call, axis = 1)
 
 #remove_empty()
 
-#df_rs = pd.DataFrame(data=pyball.retrosheet.season_game_logs('2023'))
+df_rs = pd.DataFrame(data=pyball.retrosheet.season_game_logs('2023'))
 
-#import_umpires()
+import_umpires()
 
-df_sc.to_csv("statcast_data_calls_all.csv", index=False, encoding='utf8')
+#df_sc.to_csv("statcast_data_calls_all.csv", index=False, encoding='utf8')
