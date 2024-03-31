@@ -1,8 +1,8 @@
-import pybaseball as pyball
 import pandas as pd
 import numpy as np
 from datetime import datetime
-
+import pybaseball as pyball
+from retrosheet_exec import exec_event_files
 
 def correct_call(df_sc: pd.DataFrame) -> int:
     """
@@ -32,13 +32,19 @@ def correct_call(df_sc: pd.DataFrame) -> int:
 
 
 def import_umpires():
-    from retrosheet import season_game_logs as game_logs
+    """
+    Downloads and unzips retrosheet event data and .exe, then matches
+    umpires to pitches.
+    """
     df_rs = pd.DataFrame(data=game_logs('2023'))
     df_rs = df_rs[['date','ump_home_id','ump_home_name']]
     return
 
 
 def remove_empty():
+    """
+    Removes columns that have no data at all.
+    """
     df_sc.dropna(how = 'all', axis = 1, inplace = True)
 
 
