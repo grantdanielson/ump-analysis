@@ -36,7 +36,7 @@ def import_umpires(season):
     Downloads and unzips retrosheet event data and .exe, then matches
     umpires to pitches.
     """
-    df_rs = pd.DataFrame(data = pd.read_csv(f'./retrosheet/{season}events.csv', names = df_headers('retrosheet-games')))
+    df_rs = pd.DataFrame(data = pd.read_csv(f'./ump-analysis/retrosheet/{season}events.csv', names = df_headers('retrosheet-games')))
     print(df_rs)
     df_rs = df_rs[['game_id','home_plate_umpire']]
     print(df_rs)
