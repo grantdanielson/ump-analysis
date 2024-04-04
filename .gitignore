@@ -2,7 +2,6 @@
 ump-analysis.code-workspace
 
 # Retrosheet Directory
-retrosheet/
 
 # Exported csv
 **/*.csv
