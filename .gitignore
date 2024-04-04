@@ -3,3 +3,12 @@
 
 # Cache
 **/__pycache__
+
+#Retrosheet contents besides .exe's
+/retrosheet/*.EVA
+/retrosheet/*.EVN
+/retrosheet/*.EVE
+/retrosheet/*.ROS
+/retrosheet/*.TXT
+/retrosheet/*.txt
+/retrosheet/*.csv
