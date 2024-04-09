@@ -8,6 +8,9 @@ from df_headers import df_headers
 pyball.cache.enable()
 
 def correct_call(start_dt, end_dt) -> pd.DataFrame:
+    """
+    Pulls and cleans data to use in _correct_call
+    """
     df_sc = pd.DataFrame(data=pyball.statcast(start_dt = start_dt, end_dt = end_dt), columns=df_headers('statcast'))
     # Remove rows that don't have the required data
     df_sc = df_sc[df_sc['description'].isin(['ball','called_strike'])]
@@ -48,24 +51,38 @@ def _correct_call(df_sc: pd.DataFrame) -> int:
 
 
 def red_analysis(df_sc: pd.DataFrame) -> pd.DataFrame:
-    df_re288 = pd.DataFrame(data = pd.read_csv('/re288.csv'))
+    """
+    Pulls and cleans data to use in _red_analysis
+    """
+    # Establish re288 dataframe with proper index and columns
+    df_re288 = pd.DataFrame(data = pd.read_csv('./ump-analysis/re288.csv', header = None))
+    df_re288.index = df_headers('re288-index') 
+    df_re288.columns = df_headers('re288-columns')
+    # Create new column called 'run_expectancy_delta' with _red_analyis logic
+    df_sc['run_expectancy_delta'] = df_sc.apply(_red_analyis(df_sc, df_re288), axis = 1)
     return df_sc
 
-def _red_analyis(df_sc: pd.DataFrame) -> int:
-    outs: str = f'{df_sc['outs_when_up']}'
-    count: str = f'[{df_sc['balls']},{df_sc['strikes']}]'
+def _red_analyis(df_sc: pd.DataFrame) -> str:
+    df_re288 = pd.DataFrame(data = pd.read_csv('./ump-analysis/re288.csv', header = None))
+    df_re288.index = df_headers('re288-index') 
+    df_re288.columns = df_headers('re288-columns')    
+    print(df_re288)
     first_base: str = '_'
     second_base: str = '_'
     third_base: str = '_'
 
-    if df_sc['on_1b']:
+    if pd.notnull(df_sc['on_1b']):
         first_base = '1'
-    if df_sc['on_2b']:
+    if pd.notnull(df_sc['on_2b']):
         second_base = '2'
-    if df_sc['on_3b']:
+    if pd.notnull(df_sc['on_3b']):
         third_base = '3'
     
-    out_bases: str = f'{outs} {first_base}{second_base}{third_base}'
+    out_bases: str = f'{df_sc['outs_when_up']} {first_base}{second_base}{third_base}'
+    count: str = f'[{df_sc['balls']},{df_sc['strikes']}]'
+    print(f'ob: {out_bases}, count: {count}')
+    red = df_re288.loc[out_bases, count]
+    return red
 
 
 def import_umpires(season, type = 'regular', exec_type = 'game', export_dir = './ump-analysis/retrosheet'):
@@ -89,11 +106,15 @@ def remove_empty():
     """
     #df_sc.dropna(how = 'all', axis = 1, inplace = True)
 
+
+
 #remove_empty()
 
 #df_rs = pd.DataFrame(data=pyball.retrosheet.season_game_logs('2023'))
 
-#df_sc = correct_call(start_dt = "2023-03-30", end_dt = "2023-04-01")
+df_sc = correct_call(start_dt = "2023-03-30", end_dt = "2023-04-01")
+
+df_sc['run_expectancy_delta'] = df_sc.apply(_red_analyis, axis = 1)
 #df_rs = import_umpires('2023')
 #df_pm = pd.DataFrame(data = pd.read_csv('player-map.csv'))
 #df_pm.columns = [['IDPLAYER', 'PLAYERNAME', 'BIRTHDATE', 'FIRSTNAME', 'LASTNAME', 'TEAM', 'LG', 'POS', 'IDFANGRAPHS', 'FANGRAPHSNAME', 'MLBID', 'MLBNAME', 'CBSID', 'CBSNAME', 'RETROID', 'BREFID', 'NFBCID', 'NFBCNAME', 'ESPNID', 'ESPNNAME', 'KFFLNAME', 'DAVENPORTID', 'BPID', 'YAHOOID', 'YAHOONAME', 'MSTRBLLNAME', 'BATS', 'THROWS', 'FANTPROSNAME', 'LASTCOMMAFIRST', 'ROTOWIREID', 'FANDUELNAME', 'FANDUELID', 'DRAFTKINGSNAME', 'OTTONEUID', 'HQID', 'RAZZBALLNAME', 'FANTRAXID', 'FANTRAXNAME', 'ROTOWIRENAME', 'ALLPOS', 'NFBCLASTFIRST', 'ACTIVE', 'UNDERDOG']]
