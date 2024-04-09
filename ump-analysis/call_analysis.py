@@ -5,6 +5,8 @@ import pybaseball as pyball
 import retrosheet_exec
 from df_headers import df_headers
 
+pyball.cache.enable()
+
 def correct_call(start_dt, end_dt) -> pd.DataFrame:
     df_sc = pd.DataFrame(data=pyball.statcast(start_dt = start_dt, end_dt = end_dt), columns=df_headers('statcast'))
     # Remove rows that don't have the required data
@@ -45,6 +47,27 @@ def _correct_call(df_sc: pd.DataFrame) -> int:
     return correct_call
 
 
+def red_analysis(df_sc: pd.DataFrame) -> pd.DataFrame:
+    df_re288 = pd.DataFrame(data = pd.read_csv('/re288.csv'))
+    return df_sc
+
+def _red_analyis(df_sc: pd.DataFrame) -> int:
+    outs: str = f'{df_sc['outs_when_up']}'
+    count: str = f'[{df_sc['balls']},{df_sc['strikes']}]'
+    first_base: str = '_'
+    second_base: str = '_'
+    third_base: str = '_'
+
+    if df_sc['on_1b']:
+        first_base = '1'
+    if df_sc['on_2b']:
+        second_base = '2'
+    if df_sc['on_3b']:
+        third_base = '3'
+    
+    out_bases: str = f'{outs} {first_base}{second_base}{third_base}'
+
+
 def import_umpires(season, type = 'regular', exec_type = 'game', export_dir = './ump-analysis/retrosheet'):
     """
     Import umpire data from retrosheets and match it to statcast.
@@ -72,10 +95,10 @@ def remove_empty():
 
 #df_sc = correct_call(start_dt = "2023-03-30", end_dt = "2023-04-01")
 #df_rs = import_umpires('2023')
-df_pm = pd.DataFrame(data = pd.read_csv('player-map.csv'))
-df_pm.columns = [['IDPLAYER', 'PLAYERNAME', 'BIRTHDATE', 'FIRSTNAME', 'LASTNAME', 'TEAM', 'LG', 'POS', 'IDFANGRAPHS', 'FANGRAPHSNAME', 'MLBID', 'MLBNAME', 'CBSID', 'CBSNAME', 'RETROID', 'BREFID', 'NFBCID', 'NFBCNAME', 'ESPNID', 'ESPNNAME', 'KFFLNAME', 'DAVENPORTID', 'BPID', 'YAHOOID', 'YAHOONAME', 'MSTRBLLNAME', 'BATS', 'THROWS', 'FANTPROSNAME', 'LASTCOMMAFIRST', 'ROTOWIREID', 'FANDUELNAME', 'FANDUELID', 'DRAFTKINGSNAME', 'OTTONEUID', 'HQID', 'RAZZBALLNAME', 'FANTRAXID', 'FANTRAXNAME', 'ROTOWIRENAME', 'ALLPOS', 'NFBCLASTFIRST', 'ACTIVE', 'UNDERDOG']]
-print(df_pm)
-df_pm_use = df_pm[['FIRSTNAME','LASTNAME','POS','MLBID','RETROID']]
-df_pm_use.to_csv('./players-maped.csv')
+#df_pm = pd.DataFrame(data = pd.read_csv('player-map.csv'))
+#df_pm.columns = [['IDPLAYER', 'PLAYERNAME', 'BIRTHDATE', 'FIRSTNAME', 'LASTNAME', 'TEAM', 'LG', 'POS', 'IDFANGRAPHS', 'FANGRAPHSNAME', 'MLBID', 'MLBNAME', 'CBSID', 'CBSNAME', 'RETROID', 'BREFID', 'NFBCID', 'NFBCNAME', 'ESPNID', 'ESPNNAME', 'KFFLNAME', 'DAVENPORTID', 'BPID', 'YAHOOID', 'YAHOONAME', 'MSTRBLLNAME', 'BATS', 'THROWS', 'FANTPROSNAME', 'LASTCOMMAFIRST', 'ROTOWIREID', 'FANDUELNAME', 'FANDUELID', 'DRAFTKINGSNAME', 'OTTONEUID', 'HQID', 'RAZZBALLNAME', 'FANTRAXID', 'FANTRAXNAME', 'ROTOWIRENAME', 'ALLPOS', 'NFBCLASTFIRST', 'ACTIVE', 'UNDERDOG']]
+#print(df_pm)
+#df_pm_use = df_pm[['FIRSTNAME','LASTNAME','POS','MLBID','RETROID']]
+#df_pm_use.to_csv('./players-maped.csv')
 
 #df_sc.to_csv("statcast_data_calls_all.csv", index=False, encoding='utf8')
