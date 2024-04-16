@@ -11,6 +11,12 @@ The data used for this analysis comes from [pybaseball's](https://github.com/jld
  
 Put simply, if a ball is called on a pitch that arrives within the strike zone set by the operator, an incorrect call was made. The same is true vice versa. This is is simply added as an indicator variable in a new column that is added to the end of the data, `correct_call`. A value of `1` indicates the correct call was made, while a value of `0` indicates an incorrect call was made.
 
+## Dependencies
+* pandas
+* scikit-learn
+* matplotlib
+* seaborn
+
 ## Retrosheet
      The information used here was obtained free of
      charge from and is copyrighted by Retrosheet.  Interested
