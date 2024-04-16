@@ -1,8 +1,9 @@
 import pandas as pd
+from sklearn import linear_model
 import os
 import matplotlib.pyplot as plt
-import seaborn as sns
 from matplotlib.patches import Rectangle
+import seaborn as sns
 import pybaseball as pyball
 import retrosheet_exec
 from df_headers import df_headers
@@ -118,9 +119,10 @@ def missed_call_plotting(df_sc: pd.DataFrame):
     df_mc['plate_z_rel'] = df_mc.apply(z_from_sz, axis = 1, args = [sz_top_avg, sz_bot_avg])
 
     fig, ax = plt.subplots(figsize=(4, 5))
-    sns.scatterplot(df_mc, x = 'plate_x', y = 'plate_z_rel')
-    #sns.kdeplot(df_mc, x = 'plate_x', y = 'plate_z_rel',
-                #cmap = 'flare', cut = 1,
+    #sns.scatterplot(df_mc, x = 'plate_x', y = 'plate_z_rel')
+    sns.kdeplot(df_mc, x = 'plate_x', y = 'plate_z_rel',
+                cmap = 'flare', cut = 1, fill = True,
+                levels = 15, thresh = .2)
     ax.add_patch(Rectangle((-sz_hor, sz_bot_avg ),
                            (sz_hor * 2), ((sz_top_avg - sz_bot_avg)),
                            edgecolor = 'black',
@@ -149,10 +151,20 @@ def z_from_sz(df_mc: pd.DataFrame, sz_top_avg: float, sz_bot_avg: float, ball_ra
         z_pos = relative_pos + sz_bot_avg
     return z_pos
 
+
+def logit_model(df_sc: pd.DataFrame, dv: str = 'correct_call', iv: list = ['balls', 'strikes', 'pfx_x', 'pfx_z', 'plate_x', 'plate_z', 'effective_speed',
+                                                                           'at_bat_number', 'spin_axis', 'delta_run_exp']):
+    """
+    Run logistic regression dependent variable on selected variables
+    """
+    model = linear_model.LogisticRegression()
+    model.fit(df_sc[iv], df_sc[dv])
+
+
+#df_sc = correct_call(start_dt = "2023-03-30", end_dt = "2023-04-01")
+
+#missed_call_plotting(df_sc)
+
 #df_rs = pd.DataFrame(data=pyball.retrosheet.season_game_logs('2023'))
-
-df_sc = correct_call(start_dt = "2023-03-30", end_dt = "2023-10-01")
-
-missed_call_plotting(df_sc)
 
 #df_sc.to_csv("statcast_data_calls_all_red.csv", index=False, encoding='utf8')
