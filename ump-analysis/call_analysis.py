@@ -1,11 +1,12 @@
 import pandas as pd
 from sklearn import linear_model
-import os
+import requests
+import json
+import re
 import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
 import seaborn as sns
 import pybaseball as pyball
-import retrosheet_exec
 from df_headers import df_headers
 
 pyball.cache.enable()
@@ -86,48 +87,37 @@ def _red_analysis(df_sc: pd.DataFrame, df_re288: pd.DataFrame) -> float:
         red = df_re288.loc[out_bases, count]
         return red
 
-
-def import_umpires(season, type = 'regular', exec_type = 'game', export_dir = './ump-analysis/retrosheet'):
+def missed_call_plotting(df_sc: pd.DataFrame, plot_type: str = 'kde'):
     """
-    Import umpire data from retrosheets and match it to statcast.
-
-    Will probably delete since I don't think I need it (rip like 6 hours)
+    Either kde or scatter plotting for data.
+    Valid inputs for plot_type are 'kde' and 'scatter'
     """
-    if not os.path.isfile(f'{export_dir}/{season}events.csv'):
-        retrosheet_exec.pull_event_files(season, type, export_dir)
-        retrosheet_exec.exec_event_files(season, exec_type, export_dir)
-    
-    df_rs = pd.DataFrame(data = pd.read_csv(f'./ump-analysis/retrosheet/{season}events.csv', names = df_headers('retrosheet-games')))
-    #print(df_rs)
-    #df_rs = df_rs[['game_id','home_plate_umpire']]
-    #print(df_rs)
-    return df_rs
-
-
-def missed_call_plotting(df_sc: pd.DataFrame):
-    """
-    Adds partially working plotting with strike zone layer.
-    """
+    # Parameters for relative strike zone
     sz_top_avg: float = df_sc.loc[:, 'sz_top'].mean()
     sz_bot_avg: float = df_sc.loc[:, 'sz_bot'].mean()
     sz_hor: float = (17/12) / 2 
-    ball_rad: float = 0.1208333
 
+    # Create a new dataframe with only the needed data
     df_mc = df_sc[['type', 'plate_x', 'plate_z', 'sz_top', 'sz_bot', 'correct_call']]
     df_mc = df_mc[df_mc['correct_call'].isin([0])]
 
+    # Calculate relative distance from strike zone for plotting
     df_mc['plate_z_rel'] = df_mc.apply(z_from_sz, axis = 1, args = [sz_top_avg, sz_bot_avg])
 
     fig, ax = plt.subplots(figsize=(4, 5))
-    #sns.scatterplot(df_mc, x = 'plate_x', y = 'plate_z_rel')
-    sns.kdeplot(df_mc, x = 'plate_x', y = 'plate_z_rel',
-                cmap = 'flare', cut = 1, fill = True,
-                levels = 15, thresh = .2)
-    ax.add_patch(Rectangle((-sz_hor, sz_bot_avg ),
-                           (sz_hor * 2), ((sz_top_avg - sz_bot_avg)),
-                           edgecolor = 'black',
-                           facecolor = 'none'))
+    
+    if plot_type == 'kde':
+        sns.kdeplot(df_mc, x = 'plate_x', y = 'plate_z_rel', cmap = 'flare',
+                    cut = 1, fill = True,levels = 15, thresh = .2)
+    else:
+        sns.scatterplot(df_mc, x = 'plate_x', y = 'plate_z_rel')
+
+    #Draw strike zone on plot
+    ax.add_patch(Rectangle((-sz_hor, sz_bot_avg ),(sz_hor * 2),((sz_top_avg - sz_bot_avg)),
+                           edgecolor = 'black', facecolor = 'none'))
     ax.axis('off')
+    plt.rcParams['savefig.transparent'] = True
+    plt.savefig(f'{plot_type}plot.png', dpi=1000)
     plt.show()
     return
 
@@ -151,6 +141,22 @@ def z_from_sz(df_mc: pd.DataFrame, sz_top_avg: float, sz_bot_avg: float, ball_ra
         z_pos = relative_pos + sz_bot_avg
     return z_pos
 
+def umpire_match(df_sc: pd.DataFrame) -> pd.DataFrame:
+    """
+    Match umpire to each game using the statcast game_pk variable and MLB API.
+    """
+    s = requests.Session()
+    game_pk = dict.fromkeys(df_sc.game_pk.unique()) # Find all unique game_pk's in the DataFrame
+
+    for id in game_pk:
+        boxscore = requests.get(f'https://statsapi.mlb.com/api/v1/game/{id}/boxscore').json()["info"] # Pull API info via game_pk
+        umpire = re.search("HP: .*?1B", json.dumps(boxscore)).group() # Search for umpires label in info section of API
+        umpire = umpire[4:len(umpire) - 4] # Remove first 4 characters (HP: ) and last 4 characters (. 1B)
+        game_pk[id] = umpire
+    
+    df_sc['umpire'] = df_sc.apply(lambda x: game_pk[x.game_pk], axis = 1) # Match each rows game_pk to the game_pk dict, then return associated umpire.
+    # df_sc['umpire'] = df_sc.apply(_umpirematch, axis = 1, args = [game_pk])
+    return df_sc
 
 def logit_model(df_sc: pd.DataFrame, dv: str = 'correct_call', iv: list = ['balls', 'strikes', 'pfx_x', 'pfx_z', 'plate_x', 'plate_z', 'effective_speed',
                                                                            'at_bat_number', 'spin_axis', 'delta_run_exp']):
@@ -159,12 +165,3 @@ def logit_model(df_sc: pd.DataFrame, dv: str = 'correct_call', iv: list = ['ball
     """
     model = linear_model.LogisticRegression()
     model.fit(df_sc[iv], df_sc[dv])
-
-
-#df_sc = correct_call(start_dt = "2023-03-30", end_dt = "2023-04-01")
-
-#missed_call_plotting(df_sc)
-
-#df_rs = pd.DataFrame(data=pyball.retrosheet.season_game_logs('2023'))
-
-#df_sc.to_csv("statcast_data_calls_all_red.csv", index=False, encoding='utf8')
