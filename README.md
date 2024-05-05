@@ -16,6 +16,14 @@ Put simply, if a ball is called on a pitch that arrives within the strike zone s
 * scikit-learn
 * matplotlib
 * seaborn
+* pybaseball
+* requests
+
+## Plotting
+Plotting the data is available in either scatter or density (KDE) forms. Here are 2 examples from the entire 2023 season:
+
+<img src="https://grantdanielson.com/ump-analyis/2023_scatterplot.png" width="300" height="300">
+<img src="https://grantdanielson.com/ump-analyis/2023_kdeplot.png" width="300" height="300">
 
 ## Retrosheet
      The information used here was obtained free of
@@ -27,7 +35,7 @@ For user security, **this repository does not provide the .exe files needed to p
 
 ## Todos/Goals
  - [ ] figure out how to match Retrosheet game data with statcast data
- - [ ] match data to specific umpires, have options for outputs based on missed call frequency, who had the worst calls, etc.
+ - [x] match data to specific umpires, have options for outputs based on missed call frequency, who had the worst calls, etc.
  - [x] implement data visualization with graphs or heatmaps
  - [ ] make it operable from the terminal
  - [ ] add progress bars ([tqdm](https://github.com/tqdm/tqdm)?)
